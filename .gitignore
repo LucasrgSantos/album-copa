@@ -1,0 +1,8 @@
+.claude
+.specify
+.env
+.idea
+/specs
+.venv/
+__pycache__/
+*.pyc

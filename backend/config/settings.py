@@ -84,6 +84,13 @@ CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+    # Padrão seguro: endpoints exigem autenticação salvo opt-in explícito na view.
+    # A API pública de figurinhas define `AllowAny` + `authentication_classes = []`
+    # nas próprias views (uso individual, RF-015) — futuros endpoints ficam
+    # restritos por padrão em vez de abertos.
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    # Erro padronizado { "detail", "code" }.
+    "EXCEPTION_HANDLER": "utils.api.exception_handler",
 }
 
 LANGUAGE_CODE = "pt-br"

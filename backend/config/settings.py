@@ -4,7 +4,9 @@ Stack: Python 3.12+, Django 4.2+, MySQL.
 Auditoria: django-auditlog. Logging estruturado: structlog/django-structlog.
 """
 from pathlib import Path
+
 import environ
+import structlog
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
@@ -29,7 +31,8 @@ INSTALLED_APPS = [
     "auditlog",
     "django_structlog",
 
-    # apps do projeto vão aqui (ex: "apps.figurinhas")
+    # apps do projeto
+    "apps.figurinhas",
 ]
 
 MIDDLEWARE = [
@@ -103,7 +106,7 @@ LOGGING = {
     "formatters": {
         "json_formatter": {
             "()": "structlog.stdlib.ProcessorFormatter",
-            "processor": "structlog.processors.JSONRenderer",
+            "processor": structlog.processors.JSONRenderer(),
         },
     },
     "handlers": {
@@ -111,8 +114,6 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": "INFO"},
 }
-
-import structlog  # noqa: E402
 
 structlog.configure(
     processors=[

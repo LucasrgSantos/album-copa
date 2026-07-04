@@ -44,9 +44,11 @@ def test_campos_base_presentes():
     assert hasattr(fig, "alterado_por")
 
 
-def test_selecao_herda_model_padrao():
+def test_selecao_herda_model_padrao_auditavel():
     selecao = Selecao.objects.create(nome="Argentina")
     assert selecao.criado_em is not None
     assert selecao.alterado_em is not None
-    # ModelPadrao não tem autoria.
-    assert not hasattr(selecao, "criado_por")
+    # `bandeira` é editável no admin → Selecao é auditável (tem autoria).
+    assert hasattr(selecao, "criado_por")
+    assert hasattr(selecao, "alterado_por")
+    assert selecao.bandeira == ""

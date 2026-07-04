@@ -1,0 +1,140 @@
+@use '@angular/material' as mat;
+
+/* ============================================================================
+   Único SCSS global do projeto (regra: Tailwind nos componentes; SCSS só global).
+   Identidade cromática do sistema — paleta oficial "United 2026 FIFA World Cup bid logo"
+   (schemecolor.com): #E61D25 Torch Red · #3CAC3B Average Green · #2A398D Hermes (azul)
+   · #D1D4D1 Light Gray · #474A4A Dark Heather Grey.
+   Papéis: azul = marca/ação (barra, botões) · verde = progresso (superfície) · vermelho = especial/CTA/perigo.
+   Cores como identidade ESTRUTURAL: neutros com viés azul da marca; dark = azul-noite (não cinza chumbo).
+   Ver specs/06-frontend-album e memória visual-identity-*.
+   ========================================================================== */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --- Tokens (light) --------------------------------------------------------- */
+:root {
+  --canvas: #eef0f7; /* neutro com viés azul da marca (escolhido, não cinza puro) */
+  --surface: #ffffff;
+  --surface-2: #e6e8f0;
+  --ink: #232a4a; /* tinta azulada (não preto puro) */
+  --muted: #6b7192;
+  --border: #d3d7e6;
+
+  /* Marca / ação — azul Hermes #2A398D */
+  --brand-50: #e9ebf5;
+  --brand-500: #3a4fb8;
+  --brand-600: #2a398d;
+  --brand-700: #1e2a6b;
+
+  /* Destaque especial / CTA / perigo — vermelho #E61D25 */
+  --accent-50: #fdeaea;
+  --accent-400: #f04a50;
+  --accent-500: #e61d25;
+  --accent-600: #c1121a;
+
+  /* Sucesso / progresso / posse — verde #3CAC3B */
+  --success-50: #e7f5e7;
+  --success-500: #3cac3b;
+  --success-600: #2f8a2f;
+  --success-700: #216321; /* base do hero de progresso (texto branco AA) */
+
+  --danger: #e61d25;
+}
+
+/* --- Tokens (dark = azul-noite) --------------------------------------------- */
+@mixin dark-tokens {
+  --canvas: #0f1220;
+  --surface: #191d33;
+  --surface-2: #242a45;
+  --ink: #eaecf6;
+  --muted: #9aa1c4;
+  --border: #333a5c;
+  --brand-50: #1b2450;
+  --brand-500: #6478d6;
+  --accent-50: #3a1416;
+  --success-50: #123018;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    @include dark-tokens;
+  }
+}
+:root.dark,
+html.dark {
+  @include dark-tokens;
+}
+
+/* --- Base ------------------------------------------------------------------- */
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: theme('fontFamily.sans');
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Foco visível consistente (acessibilidade). */
+:where(button, a, input, select, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--brand-50),
+    0 0 0 5px var(--brand-500);
+  border-radius: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* --- Angular Material (só o mat-select do filtro de seleção) ----------------
+   Tema alinhado à marca (índigo ~ azul Hermes). Incluímos apenas form-field +
+   select para manter o CSS enxuto; light por padrão, dark sob .dark / preferência. */
+@include mat.core();
+
+$album-primary: mat.define-palette(mat.$indigo-palette, 700);
+$album-accent: mat.define-palette(mat.$green-palette, 600);
+$album-warn: mat.define-palette(mat.$red-palette);
+
+$album-light: mat.define-light-theme(
+  (
+    color: (primary: $album-primary, accent: $album-accent, warn: $album-warn),
+    density: -2,
+  )
+);
+$album-dark: mat.define-dark-theme(
+  (
+    color: (primary: $album-primary, accent: $album-accent, warn: $album-warn),
+    density: -2,
+  )
+);
+
+@include mat.form-field-theme($album-light);
+@include mat.select-theme($album-light);
+
+:root.dark,
+html.dark {
+  @include mat.form-field-color($album-dark);
+  @include mat.select-color($album-dark);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    @include mat.form-field-color($album-dark);
+    @include mat.select-color($album-dark);
+  }
+}
+
+/* Compacta o form-field do filtro (sem espaço reservado de hint/erro). */
+.filtro-selecao {
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}

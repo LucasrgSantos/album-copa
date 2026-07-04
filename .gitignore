@@ -6,3 +6,10 @@
 .venv/
 __pycache__/
 *.pyc
+/docs
+
+# Media: uploads e placeholders são gerados; não versionar conteúdo, manter a pasta
+/backend/media/figurinhas/*
+!/backend/media/figurinhas/placeholders/
+/backend/media/figurinhas/placeholders/*
+!/backend/media/figurinhas/placeholders/.gitkeep

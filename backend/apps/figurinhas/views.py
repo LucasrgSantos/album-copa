@@ -5,10 +5,13 @@ Sem autenticação (uso individual, RF-015). Pontos de atenção contra N+1:
 - o progresso é calculado por agregação (sem laço por seleção).
 """
 
+import re
+
 import structlog
 from django.db.models import Count, Q
 from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -25,12 +28,35 @@ from .serializers import (
 
 logger = structlog.get_logger(__name__)
 
+_SEGMENTO_NUMERICO = re.compile(r"(\d+)")
+
+
+def _chave_numeracao(figurinha):
+    """Chave de ordenação natural do `code` (BRA1 < BRA2 < ... < BRA10 < BRA10s).
+
+    A ordenação lexicográfica do banco colocaria BRA10 antes de BRA2; separamos o
+    código em blocos alfabéticos/numéricos e comparamos os números como inteiros.
+    """
+    partes = _SEGMENTO_NUMERICO.split(figurinha.code)
+    return [int(p) if p.isdigit() else p.lower() for p in partes]
+
+
+class CatalogoPagination(PageNumberPagination):
+    """Entrega o catálogo inteiro em uma única requisição (mantém o envelope DRF).
+
+    O frontend carrega o catálogo uma vez e filtra no cliente; paginar por página
+    forçava N requisições. `page_size` alto cobre o catálogo (~700 itens) em uma só.
+    """
+
+    page_size = 5000
+
 
 class FigurinhaViewSet(ReadOnlyModelViewSet):
-    """Catálogo (listagem paginada + detalhe) e ações de quantidade."""
+    """Catálogo (listagem completa em uma requisição + detalhe) e ações de quantidade."""
 
     queryset = Figurinha.objects.select_related("selecao", "colecao").order_by("code")
     serializer_class = FigurinhaSerializer
+    pagination_class = CatalogoPagination
     permission_classes = [AllowAny]
     authentication_classes = []
     lookup_field = "code"
@@ -42,6 +68,10 @@ class FigurinhaViewSet(ReadOnlyModelViewSet):
         # a figurinha apenas por `code` (senão query-params de filtro dariam 404).
         if self.action == "list":
             queryset = filtrar_figurinhas(queryset, self.request.query_params)
+            # Ordena por numeração (BRA1, BRA2, ..., BRA10) em Python: SQLite/MySQL
+            # ordenam o `code` como texto. Uma única avaliação do queryset já traz
+            # `selecao`/`colecao` via select_related (sem N+1).
+            return sorted(queryset, key=_chave_numeracao)
         return queryset
 
     def _resposta_atualizada(self, figurinha):
@@ -93,7 +123,7 @@ class FigurinhaViewSet(ReadOnlyModelViewSet):
 class TimesView(ListAPIView):
     """Lista de seleções distintas para popular filtros do frontend."""
 
-    queryset = Selecao.objects.order_by("nome")
+    queryset = Selecao.objects.only("nome", "bandeira").order_by("nome")
     serializer_class = TimeSerializer
     permission_classes = [AllowAny]
     authentication_classes = []

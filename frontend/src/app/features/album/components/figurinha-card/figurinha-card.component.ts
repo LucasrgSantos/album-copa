@@ -94,7 +94,12 @@ export class FigurinhaCardComponent {
   private falhou = false;
 
   get src(): string {
-    return this.falhou || !this.figurinha.imagem ? PLACEHOLDER : this.figurinha.imagem;
+    if (this.falhou || !this.figurinha.imagem) return PLACEHOLDER;
+    // Imagens são empacotadas no próprio site (GitHub Pages) para não passarem pelo
+    // túnel ngrok (que tem teto de req/min e derruba centenas de imagens de uma vez).
+    // Remapeia a URL da API `.../media/...` -> asset local `assets/...`.
+    const i = this.figurinha.imagem.indexOf('/media/');
+    return i === -1 ? this.figurinha.imagem : 'assets' + this.figurinha.imagem.slice(i + '/media'.length);
   }
 
   get badge(): string | null {

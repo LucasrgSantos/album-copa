@@ -38,9 +38,10 @@ class AtualizarQuantidadeSerializer(serializers.Serializer):
 
 
 class TimeSerializer(serializers.Serializer):
-    """Uma seleção como opção de filtro."""
+    """Uma seleção como opção de filtro (com bandeira para exibição no frontend)."""
 
     team = serializers.CharField(source="nome", read_only=True)
+    bandeira = serializers.CharField(read_only=True)
 
 
 class PorTeamSerializer(serializers.Serializer):

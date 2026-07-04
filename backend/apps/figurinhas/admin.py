@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.db.models import Count
+from django.utils.html import format_html
 from unfold.admin import ModelAdmin, StackedInline
 
 from .models import ColecaoFigurinha, Figurinha, Selecao
@@ -28,10 +29,18 @@ class AutoriaAdminMixin:
 
 
 @admin.register(Selecao)
-class SelecaoAdmin(ModelAdmin):
-    list_display = ("nome", "total_figurinhas")
+class SelecaoAdmin(AutoriaAdminMixin, ModelAdmin):
+    list_display = ("nome", "bandeira_preview", "total_figurinhas")
     search_fields = ("nome",)
-    readonly_fields = ("criado_em", "alterado_em")
+    fields = ("nome", "bandeira", "bandeira_preview", "criado_em", "alterado_em",
+              "criado_por", "alterado_por")
+    readonly_fields = (
+        "bandeira_preview",
+        "criado_em",
+        "alterado_em",
+        "criado_por",
+        "alterado_por",
+    )
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(_total=Count("figurinhas"))
@@ -39,6 +48,15 @@ class SelecaoAdmin(ModelAdmin):
     @admin.display(description="figurinhas", ordering="_total")
     def total_figurinhas(self, obj):
         return obj._total
+
+    @admin.display(description="bandeira")
+    def bandeira_preview(self, obj):
+        if obj.bandeira:
+            return format_html(
+                '<img src="{}" style="height:20px;border-radius:2px;" alt="" />',
+                obj.bandeira,
+            )
+        return "—"
 
 
 class ColecaoFigurinhaInline(StackedInline):

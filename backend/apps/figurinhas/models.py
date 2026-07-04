@@ -1,16 +1,25 @@
 from django.db import models
 from django.utils.html import format_html
 
-from utils.models import ModelPadrao, ModelPadraoAuditavel
+from utils.models import ModelPadraoAuditavel
 
 
-class Selecao(ModelPadrao):
+class Selecao(ModelPadraoAuditavel):
     """Seleção nacional ou seção especial à qual as figurinhas pertencem.
 
-    Dado de referência, populado pela importação do catálogo → herda `ModelPadrao`.
+    Populada pela importação do catálogo, mas a `bandeira` é editável no admin
+    (preenchimento manual para as seções que não são países) → herda
+    `ModelPadraoAuditavel`.
     """
 
     nome = models.CharField("nome", max_length=64, unique=True)
+    bandeira = models.URLField(
+        "bandeira",
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="URL da imagem da bandeira do país (vazio para seções sem bandeira).",
+    )
 
     class Meta:
         ordering = ["nome"]

@@ -105,10 +105,35 @@ def test_detalhe_inexistente_retorna_erro_padrao(client, catalogo):
 def test_times(client, catalogo):
     resp = client.get("/api/v1/times/")
     assert resp.status_code == 200
-    assert {t["team"] for t in resp.json()} == {"Argentina", "Brazil", "Germany"}
+    body = resp.json()
+    assert {t["team"] for t in body} == {"Argentina", "Brazil", "Germany"}
+    # Toda opção traz o campo bandeira (vazio até ser populado).
+    assert all("bandeira" in t for t in body)
 
 
-def test_listagem_sem_n_mais_1(client, catalogo, django_assert_num_queries):
-    # Nº de queries constante (count + página), independente da quantidade de linhas.
-    with django_assert_num_queries(2):
-        client.get("/api/v1/figurinhas/")
+def test_times_com_bandeira_populada(client, catalogo):
+    from django.core.management import call_command
+
+    call_command("popular_bandeiras")
+    por_team = {t["team"]: t["bandeira"] for t in client.get("/api/v1/times/").json()}
+    assert por_team["Brazil"] == "https://flagcdn.com/w80/br.png"
+    assert por_team["Argentina"] == "https://flagcdn.com/w80/ar.png"
+
+
+def test_listagem_em_uma_requisicao_sem_n_mais_1(client, catalogo, django_assert_num_queries):
+    # Catálogo inteiro em uma única query (select_related traz selecao/colecao),
+    # sem query extra de count — a paginação devolve tudo em uma página.
+    with django_assert_num_queries(1):
+        resp = client.get("/api/v1/figurinhas/")
+    body = resp.json()
+    assert body["count"] == 4
+    assert body["next"] is None
+    assert len(body["results"]) == 4
+
+
+def test_ordenacao_por_numeracao(client):
+    # BRA10 deve vir DEPOIS de BRA2 (ordenação natural, não lexicográfica).
+    for code in ("BRA10", "BRA2", "BRA1"):
+        criar(code, code, "Brazil")
+    resultados = client.get("/api/v1/figurinhas/?team=Brazil").json()["results"]
+    assert [i["code"] for i in resultados] == ["BRA1", "BRA2", "BRA10"]

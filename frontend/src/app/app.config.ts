@@ -5,11 +5,12 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 
 import { routes } from './app.routes';
 import { erroInterceptor } from './core/http/erro.interceptor';
+import { ngrokInterceptor } from './core/http/ngrok.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideHttpClient(withFetch(), withInterceptors([erroInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([ngrokInterceptor, erroInterceptor])),
     // Necessário para as animações dos componentes do Angular Material (mat-select).
     provideAnimations(),
   ],

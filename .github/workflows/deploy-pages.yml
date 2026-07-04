@@ -1,0 +1,69 @@
+name: Deploy frontend to GitHub Pages
+
+# Builda o app Angular (pasta frontend/) e publica no GitHub Pages.
+# O site fica em https://lucasrgsantos.github.io/album-copa/ (base-href /album-copa/).
+# A API é consumida da URL absoluta definida em src/environments/environment.prod.ts.
+
+on:
+  push:
+    branches: [master, feat-deploy-postgres]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Uma publicação por vez; cancela runs antigos em andamento.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build de produção
+        # baseHref (/album-copa/) vem do angular.json (configuração production).
+        run: npx ng build --configuration production
+
+      - name: Fallback de SPA (404) + desabilitar Jekyll
+        # GitHub Pages não faz fallback de SPA: deep-links/refresh caem em 404.
+        # Servir o index.html como 404.html resolve o roteamento client-side.
+        # .nojekyll evita que o Pages ignore arquivos/pastas iniciados por "_".
+        run: |
+          cp dist/frontend/browser/index.html dist/frontend/browser/404.html
+          touch dist/frontend/browser/.nojekyll
+
+      - name: Upload do artefato do Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist/frontend/browser
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

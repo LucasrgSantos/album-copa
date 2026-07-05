@@ -42,10 +42,6 @@ import { UiEstadoComponent } from '../../components/ui-estado/ui-estado.componen
           ◐
         </button>
       </div>
-      <span
-        class="pointer-events-none absolute inset-x-0 bottom-0 h-[4px] bg-[linear-gradient(90deg,var(--success-500)_0_34%,#ffffff_34%_66%,var(--accent-500)_66%_100%)]"
-        aria-hidden="true"
-      ></span>
     </header>
 
     <main class="mx-auto max-w-[1240px] px-4 pb-20 pt-6 sm:px-7">

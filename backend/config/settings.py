@@ -81,6 +81,17 @@ DATABASES = {
 
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 
+# O interceptor do frontend envia `ngrok-skip-browser-warning` para pular a página
+# de aviso do ngrok free. Header custom exige preflight; precisa estar liberado aqui.
+from corsheaders.defaults import default_headers  # noqa: E402
+
+CORS_ALLOW_HEADERS = (*default_headers, "ngrok-skip-browser-warning")
+
+# Atrás do TLS do ngrok (ou outro proxy HTTPS), o Django se enxerga como HTTP e
+# monta URLs de mídia com http:// — o que vira mixed content numa página HTTPS.
+# Confiar no cabeçalho do proxy faz `build_absolute_uri` gerar https://.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
